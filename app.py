@@ -127,6 +127,27 @@ async def rag_secure(request: QueryRequest) -> Dict:
         "llm_output": response_text
     }
 
+@app.post("/api/v1/rag/judge")
+async def rag_judge(request: QueryRequest) -> Dict:
+    with open("data/policy_poisoned.txt", "r") as f:
+        context = f.read()
+    
+    try:
+        raw_response = llm.generate_response(context, request.query)
+        judge_decision = llm.evaluate_security(raw_response)
+    except Exception as e:
+        print(f"LLM Service Error: {str(e)}")
+        raise HTTPException(status_code=503, detail="LLM Service is temporarily unavailable due to timeout.")
+    
+    if judge_decision == "BLOCK":
+        raise HTTPException(status_code=403, detail="AI Judge blocked the response.")
+        
+    return {
+        "status": "success",
+        "mode": "SECURE (AI Judge Active)",
+        "llm_output": raw_response
+    }
+
 @app.get("/health")
 async def health_check():
     return {"status": "online", "model": "llama-3.1-8b-instant"}

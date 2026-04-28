@@ -14,6 +14,7 @@ The **RAG Security Sandbox** is a professional DevSecOps demonstration environme
 It specifically addresses **Data Poisoning** and **Prompt Injection** vulnerabilities. The project implements a "Red/Blue Team" methodology:
 - **Red Team**: Demonstrates how malicious payloads in retrieved context can hijack LLM outputs (e.g., phishing link injection).
 - **Blue Team**: Implements automated **Output Guardrails** using regex-based validation to intercept and block unauthorized data before it reaches the end user.
+- **AI Judge (LLM-as-a-Judge)**: Evaluates generated responses using a secondary LLM strictly prompted as a DevSecOps auditor to catch zero-day semantic attacks that bypass regular expressions.
 
 This sandbox uses **Groq API** with the **Llama 3.1 8B** model for lightning-fast inference and realistic security testing.
 
@@ -63,6 +64,7 @@ pytest tests/ --html=security_report.html --self-contained-html
 ### Interpreting the Report
 - **`test_vulnerable_endpoint_leaks_data`**: Validates that without guardrails, the LLM leaks poisoned phishing URLs.
 - **`test_secure_endpoint_blocks_attack`**: Validates that the Security Guardrail correctly returns a `403 Forbidden` when an unauthorized URL is detected.
+- **`test_ai_judge_blocks_attack`**: Validates the LLM-as-a-Judge architecture, proving that an AI Auditor can intercept and block malicious outputs based on context rather than hardcoded rules.
 - **HTML Report**: Open `security_report.html` in your browser for a professional visualization of the security audit results.
 
 ---
