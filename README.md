@@ -1,11 +1,13 @@
 # RAG Security Sandbox 🛡️🤖
 
+[![DevSecOps Pipeline](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml/badge.svg)](https://github.com/MilJav11/rag-security-sandbox/actions)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.1-orange?style=for-the-badge)](https://groq.com/)
 [![Pytest](https://img.shields.io/badge/Pytest-Security%20Fuzzer-green?style=for-the-badge&logo=pytest)](https://docs.pytest.org/)
 [![DevSecOps](https://img.shields.io/badge/DevSecOps-Ready-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/DevSecOps)
 
 ## 📋 Executive Summary
+...
 
 The **RAG Security Sandbox** is a professional DevSecOps demonstration environment designed to validate the security posture of Retrieval-Augmented Generation (RAG) architectures. 
 
@@ -73,4 +75,4 @@ pytest tests/ --html=security_report.html --self-contained-html
 - **`tests/`**: The security testing suite and payloads.
 
 ---
-*Disclaimer: This project is for educational and security research purposes only. Always use LLMs and RAG systems responsibly.*
+*Disclaimer: This project is for educational and security research purposes only. Always use LLMs and RAG systems responsibly!*
