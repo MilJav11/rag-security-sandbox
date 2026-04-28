@@ -251,11 +251,11 @@ async def dashboard():
     total_queries = len(logs)
     attacks_blocked = sum(1 for l in logs if l.get("decision") == "BLOCK")
     
-    # Výpočet priemernej latencie
+    # Calculate average latency
     latencies = [float(l.get("latency", 0)) for l in logs if l.get("latency")]
     avg_latency = sum(latencies) / len(latencies) if latencies else 0
     
-    # Zoradíme logy od najnovších
+    # Sort logs from newest to oldest
     logs.reverse()
     
     html = f"""
@@ -319,27 +319,46 @@ async def dashboard():
                     <tbody class="divide-y divide-gray-700/50">
     """
     
-    for l in logs:
+    for i, l in enumerate(logs):
         decision_badge = '<span class="px-2 py-1 bg-green-500/20 text-green-400 rounded-md font-medium text-xs">ALLOW</span>'
-        if l.get("decision") == "BLOCK":
+        if l["decision"] == "BLOCK":
             decision_badge = '<span class="px-2 py-1 bg-red-500/20 text-red-400 rounded-md font-medium text-xs flex items-center inline-flex gap-1">☠️ BLOCK</span>'
             
         row = f"""
                         <tr class="hover:bg-gray-700/30 transition-colors group">
                             <td class="px-6 py-4 text-gray-400">{l["timestamp"][:19].replace('T', ' ')}</td>
                             <td class="px-6 py-4 font-mono text-gray-300">{l["endpoint"]}</td>
-                            <td class="px-6 py-4 text-gray-300">{l.get("security_method", "N/A")}</td>
+                            <td class="px-6 py-4 text-gray-300">{l["security_method"]}</td>
                             <td class="px-6 py-4">{decision_badge}</td>
-                            <td class="px-6 py-4 text-gray-400">{l.get("latency", 0):.2f}s</td>
+                            <td class="px-6 py-4 text-gray-400">{l["latency"]:.2f}s</td>
                         </tr>
                         <tr class="hidden group-hover:table-row bg-gray-900/30">
                             <td colspan="5" class="px-6 py-4 text-gray-300 text-xs font-mono space-y-2">
-                                <div><span class="text-blue-400 font-bold">Query:</span> {l.get("query", "")}</div>
-                                <div><span class="text-purple-400 font-bold">LLM Response:</span> {l.get("llm_response", "")}</div>
+                                <div><span class="text-blue-400 font-bold">Query:</span> {l["query"]}</div>
+                                <div><span class="text-purple-400 font-bold">LLM Response:</span> {l["llm_response"]}</div>
                             </td>
                         </tr>
         """
         html += row
+        
+        # --- NOVÁ LOGIKA NA VYKRESLENIE ČIARY MEDZI TESTAMI ---
+        # Ak existuje ďalší záznam, porovnáme ich časy
+        if i < len(logs) - 1:
+            try:
+                # Načítame časy (Z nahradíme za +00:00 pre kompatibilitu)
+                t1 = datetime.fromisoformat(l["timestamp"].replace("Z", "+00:00"))
+                t2 = datetime.fromisoformat(logs[i+1]["timestamp"].replace("Z", "+00:00"))
+                # Ak je medzi logmi medzera väčšia ako 5 sekúnd, ide o nový testovací beh
+                if abs((t1 - t2).total_seconds()) > 5:
+                    html += """
+                        <tr>
+                            <td colspan="5" class="px-6 py-2">
+                                <div class="border-b border-dashed border-gray-600 w-full opacity-50"></div>
+                            </td>
+                        </tr>
+                    """
+            except Exception as e:
+                pass # Pre istotu, ak by zlyhalo parsovanie času
         
     html += """
                     </tbody>
