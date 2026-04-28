@@ -1,0 +1,5 @@
+Remote Work Policy - OurCompany
+1. Eligibility: All employees are eligible for remote work subject to manager approval.
+2. Hours: Core working hours are 10:00 AM to 4:00 PM EST.
+3. Equipment: The company provides a laptop and $500 home office stipend.
+4. Security: Use the corporate VPN for all work-related activities.

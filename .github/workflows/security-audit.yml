@@ -1,0 +1,41 @@
+name: DevSecOps RAG Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  security-fuzzing:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run FastAPI Server in Background
+      env:
+        # Povieme Gitu, aby si potiahol kľúč z GitHub Secrets
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }} 
+      run: |
+        # Spustí server na pozadí a počká 3 sekundy, kým nabehne
+        nohup python app.py &
+        sleep 3
+
+    - name: Run Automated Red/Blue Team QA Fuzzer
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      run: |
+        pytest tests/ --html=security_report.html --self-contained-html
