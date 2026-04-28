@@ -1,5 +1,6 @@
 import re
 import os
+import time
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
@@ -45,18 +46,11 @@ async def global_exception_handler(request: Request, exc: Exception):
 class QueryRequest(BaseModel):
     query: str
 
-def get_context(vulnerable: bool = True) -> str:
-    """
-    Simulates a database retrieval.
-    vulnerable=True returns the 'poisoned' document containing injection payloads.
-    vulnerable=False returns the safe document.
-    """
-    filename = "data/policy_poisoned.txt" if vulnerable else "data/policy_safe.txt"
-    try:
-        with open(filename, "r") as f:
-            return f.read()
-    except FileNotFoundError:
-        raise HTTPException(status_code=500, detail=f"Database file {filename} missing.")
+import chromadb
+
+# Initialize ChromaDB client
+chroma_client = chromadb.PersistentClient(path="./chroma_data")
+chroma_collection = chroma_client.get_or_create_collection(name="rag_policies")
 
 def output_guardrail(text: str) -> bool:
     """
@@ -80,37 +74,58 @@ def output_guardrail(text: str) -> bool:
 
 @app.post("/api/v1/rag/vulnerable")
 async def rag_vulnerable(request: QueryRequest):
-    # Load poisoned context
-    with open("data/policy_poisoned.txt", "r") as f:
-        context = f.read()
+    logger.info(f"Incoming request to /vulnerable. Query: {request.query}")
+    
+    # Retrieve context from ChromaDB
+    results = chroma_collection.query(query_texts=[request.query], n_results=1)
+    context = results['documents'][0][0] if results['documents'] and results['documents'][0] else ""
+    metadata = results['metadatas'][0][0] if results['metadatas'] and results['metadatas'][0] else {}
+    
+    logger.info(f"Context retrieved. Metadata: {metadata}. Snippet: {context[:60]!r}...")
     
     try:
         # Attempt LLM generation (critical failure point for timeouts)
+        logger.info("Starting LLM generation...")
+        start_time = time.time()
         response_text = llm.generate_response(context, request.query)
+        latency = time.time() - start_time
+        logger.info(f"LLM generation completed in {latency:.2f} seconds.")
+        
         return {"llm_output": response_text}
         
     except Exception as e:
         # If LLM times out or fails, return 503 instead of 500 for better service visibility
-        print(f"LLM Service Error: {str(e)}") # Log to terminal
+        logger.error(f"LLM Service Error: {str(e)}") # Log to terminal
         raise HTTPException(status_code=503, detail="LLM Service is temporarily unavailable due to timeout.")
 
 @app.post("/api/v1/rag/secure")
 async def rag_secure(request: QueryRequest) -> Dict:
     """
     SECURE ENDPOINT:
-    Retrieves the same poisoned context, but applies an Output Guardrail
+    Retrieves the context from ChromaDB, applies an Output Guardrail
     to validate the LLM's response before it reaches the user.
     """
-    context = get_context(vulnerable=True)
+    logger.info(f"Incoming request to /secure. Query: {request.query}")
+    
+    results = chroma_collection.query(query_texts=[request.query], n_results=1)
+    context = results['documents'][0][0] if results['documents'] and results['documents'][0] else ""
+    metadata = results['metadatas'][0][0] if results['metadatas'] and results['metadatas'][0] else {}
+    
+    logger.info(f"Context retrieved. Metadata: {metadata}. Snippet: {context[:60]!r}...")
     
     try:
+        logger.info("Starting LLM generation...")
+        start_time = time.time()
         response_text = llm.generate_response(context, request.query)
+        latency = time.time() - start_time
+        logger.info(f"LLM generation completed in {latency:.2f} seconds.")
     except Exception as e:
-        print(f"LLM Service Error: {str(e)}")
+        logger.error(f"LLM Service Error: {str(e)}")
         raise HTTPException(status_code=503, detail="LLM Service is temporarily unavailable due to timeout.")
     
     # Apply Security Guardrail
     if not output_guardrail(response_text):
+        logger.warning(f"Security Guardrail triggered: Response blocked. Query: {request.query}")
         raise HTTPException(
             status_code=403,
             detail={
@@ -123,23 +138,39 @@ async def rag_secure(request: QueryRequest) -> Dict:
     return {
         "status": "success",
         "mode": "SECURE (Guardrail Active)",
-        "retrieved_context": "policy_poisoned.txt",
+        "retrieved_context": "ChromaDB",
         "llm_output": response_text
     }
 
 @app.post("/api/v1/rag/judge")
 async def rag_judge(request: QueryRequest) -> Dict:
-    with open("data/policy_poisoned.txt", "r") as f:
-        context = f.read()
+    logger.info(f"Incoming request to /judge. Query: {request.query}")
+    
+    results = chroma_collection.query(query_texts=[request.query], n_results=1)
+    context = results['documents'][0][0] if results['documents'] and results['documents'][0] else ""
+    metadata = results['metadatas'][0][0] if results['metadatas'] and results['metadatas'][0] else {}
+    
+    logger.info(f"Context retrieved. Metadata: {metadata}. Snippet: {context[:60]!r}...")
     
     try:
+        logger.info("Starting initial LLM generation...")
+        start_time = time.time()
         raw_response = llm.generate_response(context, request.query)
+        latency = time.time() - start_time
+        logger.info(f"Initial LLM generation completed in {latency:.2f} seconds.")
+        
+        logger.info("Starting AI Judge evaluation...")
+        judge_start = time.time()
         judge_decision = llm.evaluate_security(raw_response)
+        judge_latency = time.time() - judge_start
+        logger.info(f"AI Judge evaluation completed in {judge_latency:.2f} seconds. Decision: {judge_decision}")
+        
     except Exception as e:
-        print(f"LLM Service Error: {str(e)}")
+        logger.error(f"LLM Service Error: {str(e)}")
         raise HTTPException(status_code=503, detail="LLM Service is temporarily unavailable due to timeout.")
     
     if judge_decision == "BLOCK":
+        logger.warning(f"Security Guardrail triggered: Response blocked by AI Judge. Query: {request.query}")
         raise HTTPException(status_code=403, detail="AI Judge blocked the response.")
         
     return {

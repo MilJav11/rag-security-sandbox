@@ -42,7 +42,13 @@ Create a `.env` file in the root directory and add your Groq API key:
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
-### 3. Start the FastAPI Server
+### 3. Initialize the Vector Database (ChromaDB)
+Run the initialization script to populate the local vector database with the sample poisoned policies:
+```bash
+python init_db.py
+```
+
+### 4. Start the FastAPI Server
 The application runs on FastAPI and exposes the RAG endpoints.
 ```bash
 python app.py
