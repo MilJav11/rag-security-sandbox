@@ -1,6 +1,5 @@
 # RAG Security Sandbox 🛡️🤖
 
-[![DevSecOps Pipeline](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml/badge.svg)](https://github.com/MilJav11/rag-security-sandbox/actions)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.1-orange?style=for-the-badge)](https://groq.com/)
 [![Pytest](https://img.shields.io/badge/Pytest-Security%20Fuzzer-green?style=for-the-badge&logo=pytest)](https://docs.pytest.org/)
@@ -8,14 +7,32 @@
 
 ## 📋 Executive Summary
 
-The **RAG Security Sandbox** is an advanced Red/Blue team environment designed to validate the security posture of Retrieval-Augmented Generation (RAG) architectures. It acts as a professional DevSecOps demonstration proving both vulnerabilities and the efficacy of modern defenses against Data Poisoning, Prompt Leaking, and Social Engineering attacks.
+The **RAG Security Sandbox** is a professional DevSecOps playground and QA automation suite designed to validate the security posture of Retrieval-Augmented Generation (RAG) applications. It demonstrates practical AI QA/security engineering by simulating modern attacks (Prompt Injection, Data Poisoning, Prompt Leaking) and proving the efficacy of multi-layered AI defenses.
+
+---
+
+## 📸 Automated DevSecOps Workflow in Action
+
+### 1. Automated Security Fuzzing
+*Executing adversarial payloads via Pytest against secure and vulnerable API endpoints.*
+![Pytest Terminal](docs/terminal.png)
+
+### 2. Live SOC Monitoring
+*Real-time observability of AI decisions, latencies, and active threats via custom Tailwind CSS dashboard.*
+![Live SOC Dashboard](docs/dashboard.png)
+
+### 3. Executive AI Risk Reporting
+*Automated CISO-level HTML report generated post-fuzzing, summarizing vulnerabilities and DLP guardrail effectiveness.*
+![Executive Risk Report](docs/report.png)
+
+---
 
 ## 🌟 Key Features
 
-*   **True RAG Architecture:** Uses the ChromaDB vector database for realistic, production-like context retrieval and knowledge grounding.
-*   **Dual Security Guardrails:** Implements a defense-in-depth strategy using Regex for lightning-fast deterministic filtering, alongside an advanced "LLM-as-a-Judge" for deep semantic analysis and Data Loss Prevention (DLP).
-*   **Live SOC Dashboard:** Features a real-time UI built with Tailwind CSS to visually monitor attacks, security decisions (ALLOW/BLOCK), and latencies in a Security Operations Center style interface.
-*   **Adversarial Fuzzer:** Includes an automated Pytest suite programmatically executing attacks to test against Data Poisoning, Prompt Leaking, and Social Engineering vulnerabilities.
+* **True RAG Architecture:** Uses the ChromaDB vector database for realistic, production-like context retrieval and knowledge grounding.
+* **Dual Security Guardrails:** Implements a defense-in-depth strategy using Regex for lightning-fast deterministic filtering, alongside an advanced "LLM-as-a-Judge" for deep semantic analysis and Data Loss Prevention (DLP).
+* **Automated QA & Reporting:** The `pytest` test suite automatically triggers adversarial fuzzing and concludes with an auto-generated HTML Executive Risk Report outlining the system's security posture.
+* **Live SOC Dashboard:** Features a real-time UI built with Tailwind CSS to visually monitor attacks, security decisions (ALLOW/BLOCK), and latencies.
 
 ## 🚀 Quick Start
 
@@ -40,19 +57,21 @@ python app.py
 ```
 
 ## 🎯 Running the Attack Simulation
+Once the FastAPI server is running (`python app.py`), you can trigger the automated adversarial fuzzer and observe the results.
 
-Once the FastAPI server is running (`python app.py`), you can trigger the automated adversarial fuzzer and observe the results in real-time.
+### Open the SOC Dashboard:
+Navigate your browser to http://localhost:8000/dashboard to view the live Security Operations Center interface.
 
-1. **Open the SOC Dashboard:**
-   Navigate your browser to [http://localhost:8000/dashboard](http://localhost:8000/dashboard) to view the live Security Operations Center interface.
+### Run the Fuzzer:
+In a separate terminal (with the virtual environment activated), execute the security test suite:
 
-2. **Run the Fuzzer:**
-   In a separate terminal (with the virtual environment activated), execute the security test suite:
-   ```bash
-   pytest tests/ --html=security_report.html --self-contained-html
-   ```
+```bash
+pytest tests/
+```
 
-Watch the dashboard update in real-time as the fuzzer attacks the vulnerable and secure endpoints, demonstrating the effectiveness of the dual security guardrails!
+### Review the Results:
+Watch the dashboard update in real-time. Once the tests complete, open the newly generated `executive_risk_report.html` in your browser to view the CISO summary.
 
 ---
+
 *Disclaimer: This project is for educational and security research purposes only. Always use LLMs and RAG systems responsibly!*
