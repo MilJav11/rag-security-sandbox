@@ -28,6 +28,11 @@ ENV/
 # Environment Variables
 .env
 
+# Runtime artifacts
+/executive_risk_report.html
+logs/*
+!logs/.gitkeep
+
 # Testing
 .pytest_cache/
 .coverage
