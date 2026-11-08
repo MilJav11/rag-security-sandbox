@@ -5,6 +5,7 @@
 [![Pytest](https://img.shields.io/badge/Pytest-Security%20Fuzzer-green?style=for-the-badge&logo=pytest)](https://docs.pytest.org/)
 [![DevSecOps](https://img.shields.io/badge/DevSecOps-Ready-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/DevSecOps)
 [![CI](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml/badge.svg)](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml)
+[![Offline Tests](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/offline-tests.yml/badge.svg)](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/offline-tests.yml)
 
 ## 📋 Executive Summary
 
@@ -75,20 +76,39 @@ Once the FastAPI server is running (`python app.py`), you can trigger the automa
 Navigate your browser to http://localhost:8000/dashboard to view the live Security Operations Center interface.
 
 ### Run the Fuzzer:
-In a second terminal (with the virtual environment activated), execute the security test suite:
+The live tests require the running server and a valid `GROQ_API_KEY` in `.env`. Use two separate terminals — never a single code block:
+
+**Terminal 1** — start the server (this blocks):
 
 ```bash
-# 1. Initialize the Vector Database (if not done yet)
-python init_db.py
-
-# 2. Make sure the server is running in the first terminal
 python app.py
+```
 
-# 3. In the second terminal, run the tests
+**Terminal 2** — with the virtual environment activated, run the security test suite:
+
+```bash
 pytest tests/
 ```
 
-Note: the tests call a live LLM, so they require the running server and a valid `GROQ_API_KEY` in `.env`. Results can vary between runs due to LLM non-determinism.
+Note: the tests call a live LLM, so results can vary between runs due to LLM non-determinism.
+
+### Offline tests (no API key needed)
+No server, no `GROQ_API_KEY`, no `.env`, no network — the suite mocks the Groq client and ChromaDB and fails if any code tries to open a network connection:
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest tests_offline -q -rxX
+```
+
+They also run in CI via the `Offline Tests` workflow. Run `tests/` and `tests_offline/` in separate commands.
+
+### Known security gaps
+Four known weaknesses are intentionally documented as expected-failure (`xfail(strict=True)`) tests that assert the secure behaviour:
+
+- The AI judge is fail-open on non-exact `"BLOCK"` verdicts (`"BLOCK."`, `""`, refusal text still return 200).
+- The URL whitelist is a substring match (`http://ourcompany.com.evil.com/x` passes).
+- The URL regex scheme is case-sensitive (`HTTP://EVIL.COM/x` is not matched).
+- The dashboard interpolates `query` / `llm_response` unescaped (stored XSS).
 
 ### Review the Results:
 Watch the dashboard update in real-time. Once the tests complete, open the newly generated `executive_risk_report.html` in your browser to view the CISO summary (a static sample is available at `docs/sample-executive-risk-report.html`).
