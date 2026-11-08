@@ -4,6 +4,7 @@
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.1-orange?style=for-the-badge)](https://groq.com/)
 [![Pytest](https://img.shields.io/badge/Pytest-Security%20Fuzzer-green?style=for-the-badge&logo=pytest)](https://docs.pytest.org/)
 [![DevSecOps](https://img.shields.io/badge/DevSecOps-Ready-blue?style=for-the-badge)](https://en.wikipedia.org/wiki/DevSecOps)
+[![CI](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml/badge.svg)](https://github.com/MilJav11/rag-security-sandbox/actions/workflows/security-audit.yml)
 
 ## 📋 Executive Summary
 
@@ -34,6 +35,17 @@ The **RAG Security Sandbox** is a professional DevSecOps playground and QA autom
 * **Automated QA & Reporting:** The `pytest` test suite automatically triggers adversarial fuzzing and concludes with an auto-generated HTML Executive Risk Report outlining the system's security posture.
 * **Live SOC Dashboard:** Features a real-time UI built with Tailwind CSS to visually monitor attacks, security decisions (ALLOW/BLOCK), and latencies.
 
+## ⚙️ Configuration
+
+Copy `.env.example` to `.env` and set your own `GROQ_API_KEY`:
+
+```bash
+cp .env.example .env
+# then edit .env and add your key
+```
+
+Never commit `.env` — it is git-ignored and must stay local.
+
 ## 🚀 Quick Start
 
 Follow these steps to initialize the environment and start the security simulation:
@@ -63,14 +75,25 @@ Once the FastAPI server is running (`python app.py`), you can trigger the automa
 Navigate your browser to http://localhost:8000/dashboard to view the live Security Operations Center interface.
 
 ### Run the Fuzzer:
-In a separate terminal (with the virtual environment activated), execute the security test suite:
+In a second terminal (with the virtual environment activated), execute the security test suite:
 
 ```bash
+# 1. Initialize the Vector Database (if not done yet)
+python init_db.py
+
+# 2. Make sure the server is running in the first terminal
+python app.py
+
+# 3. In the second terminal, run the tests
 pytest tests/
 ```
 
+Note: the tests call a live LLM, so they require the running server and a valid `GROQ_API_KEY` in `.env`. Results can vary between runs due to LLM non-determinism.
+
 ### Review the Results:
-Watch the dashboard update in real-time. Once the tests complete, open the newly generated `executive_risk_report.html` in your browser to view the CISO summary.
+Watch the dashboard update in real-time. Once the tests complete, open the newly generated `executive_risk_report.html` in your browser to view the CISO summary (a static sample is available at `docs/sample-executive-risk-report.html`).
+
+> Note: the `GROQ-SEC-…` token in `llm_client.py` is an intentional fake honeypot for the prompt-leak test, not a real key.
 
 ---
 
